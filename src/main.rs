@@ -12,6 +12,9 @@ use mimalloc::MiMalloc;
 #[cfg_attr(feature = "enable_mimalloc", global_allocator)]
 static GLOBAL: MiMalloc = MiMalloc;
 
+# adding support for AWS lambda via lambda_web 
+use lambda_web::{is_running_on_lambda, launch_rocket_on_lambda, LambdaError};
+
 #[macro_use]
 extern crate rocket;
 #[macro_use]
@@ -68,7 +71,7 @@ use std::sync::{atomic::Ordering, Arc};
 pub use util::is_running_in_container;
 
 #[rocket::main]
-async fn main() -> Result<(), Error> {
+async fn main() -> Result<(), LambdaError> {
     parse_args().await;
     launch_info();
 
@@ -570,7 +573,7 @@ async fn create_db_pool() -> db::DbPool {
     }
 }
 
-async fn launch_rocket(pool: db::DbPool, extra_debug: bool) -> Result<(), Error> {
+async fn launch_rocket(pool: db::DbPool, extra_debug: bool) -> Result<(), LambdaError> {
     let basepath = &CONFIG.domain_path();
 
     let mut config = rocket::Config::from(rocket::Config::figment());
@@ -627,7 +630,14 @@ async fn launch_rocket(pool: db::DbPool, extra_debug: bool) -> Result<(), Error>
         });
     }
 
-    instance.launch().await?;
+    // instance.launch().await?;
+    // lambda support 
+    if is_running_on_lambda() {        
+        launch_rocket_on_lambda(instance).await?;
+    } else {        
+        instance.launch().await?;
+    }
+    //*********************************************
 
     info!("Vaultwarden process exited!");
     Ok(())
