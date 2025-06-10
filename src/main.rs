@@ -12,7 +12,7 @@ use mimalloc::MiMalloc;
 #[cfg_attr(feature = "enable_mimalloc", global_allocator)]
 static GLOBAL: MiMalloc = MiMalloc;
 
-# adding support for AWS lambda via lambda_web 
+// adding support for AWS lambda via lambda_web 
 use lambda_web::{is_running_on_lambda, launch_rocket_on_lambda, LambdaError};
 
 #[macro_use]
